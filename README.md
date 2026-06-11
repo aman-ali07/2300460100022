@@ -18,8 +18,11 @@ Campus hiring evaluation project.
 ### Authorisation API Call
 ![Authorisation](screenshot/Authorisation_api_call.png)
 
-### Evaluation Logs
-![Logs](screenshot/1000015564.jpg)
+### Evaluation Logs (Phone)
+![Logs](screenshot/logs_phone.jpg)
+
+### Evaluation Logs (WhatsApp)
+![Logs WhatsApp](screenshot/logs_whatsapp.jpeg)
 
 ## Getting Started
 
