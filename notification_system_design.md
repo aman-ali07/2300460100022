@@ -617,3 +617,81 @@ function process_job(job):
 
 ---
 
+## Stage 6
+
+### Priority Inbox Algorithm
+
+See implementation file: `notification_app_be/src/utils/priority.ts`
+
+---
+
+#### Priority Score Formula
+
+```
+score = type_weight / (age_in_hours + 1)
+```
+
+**Type Weights:**
+| Type | Weight |
+|------|--------|
+| Placement | 3 (highest) |
+| Result | 2 |
+| Event | 1 (lowest) |
+
+**Recency Factor:** `1 / (age_in_hours + 1)`
+- At age = 0 hours → factor = 1.0 (maximum recency)
+- At age = 1 hour → factor = 0.5
+- At age = 9 hours → factor = 0.1
+
+**Examples:**
+| Notification | Age | Score |
+|---|---|---|
+| Placement, 0h old | 0h | 3 / 1 = 3.00 |
+| Placement, 2h old | 2h | 3 / 3 = 1.00 |
+| Result, 0h old | 0h | 2 / 1 = 2.00 |
+| Event, 0h old | 0h | 1 / 1 = 1.00 |
+| Placement, 9h old | 9h | 3 / 10 = 0.30 |
+
+This formula naturally ensures that a very old Placement notification can rank below a fresh Result notification — which is the desired behavior.
+
+---
+
+#### Algorithm 1: Batch Sort (for fetching existing notifications)
+
+```typescript
+function getTopN(notifications, n):
+    return notifications
+        .map(n => ({ ...n, score: getPriorityScore(n) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, n)
+```
+
+Time complexity: **O(n log n)** — simple and easy to understand.
+
+---
+
+#### Algorithm 2: PriorityInbox Class (for streaming new notifications)
+
+When new notifications arrive in real time, we don't want to re-sort the entire list every time. Instead, we maintain a sorted list of exactly the top N items.
+
+```typescript
+class PriorityInbox {
+    items = []  // sorted descending by score, max N items
+    capacity = N
+
+    add(notification):
+        scored = { ...notification, score: getPriorityScore(notification) }
+
+        if items.length < capacity:
+            items.push(scored)
+        else:
+            lowestScore = items[items.length - 1].score
+            if scored.score > lowestScore:
+                items[items.length - 1] = scored  // replace the weakest
+
+        items.sort(...)  // re-sort (N is small, e.g. 10 — very fast)
+```
+
+Time complexity per new notification: **O(N log N)** where N is the inbox size (e.g., 10), **not** the total number of notifications. Since N is always small, this is effectively **O(1)** in practice.
+
+**Why not a heap?** A min-heap would give O(log N) per insertion, which is theoretically better. However, since N is at most 20, the difference is negligible in practice. The sorted array approach is simpler to implement and explain in an interview.
