@@ -299,3 +299,105 @@ WHERE student_id = 1042 AND is_read = FALSE;
 
 ---
 
+## Stage 3
+
+### Query Optimization
+
+#### Given Slow Query
+
+```sql
+SELECT * FROM notifications
+WHERE student_id = 1042 AND isRead = false
+ORDER BY createdAt ASC;
+```
+
+---
+
+#### Q1: Is this query accurate?
+
+**No, it has issues:**
+
+1. `SELECT *` — fetches all columns including ones not needed (wastes I/O and memory)
+2. `student_id` — if using the normalized schema from Stage 2, this column does not exist on the `notifications` table. It is in `student_notifications`. So the query would fail.
+3. `isRead` and `createdAt` — inconsistent naming. The column should be `is_read` and `created_at` (snake_case, per PostgreSQL convention).
+4. Even assuming the schema is a single flat `notifications` table with `student_id` and `is_read`, there are performance issues (see Q2).
+
+---
+
+#### Q2: Why is this slow?
+
+With **50,000 students** and **5,000,000 notifications**, assuming no index:
+
+- The database performs a **full table scan** — it reads all 5 million rows to find the ones where `student_id = 1042 AND is_read = false`.
+- After the scan, it must **sort** all matching rows by `created_at`. With no index, this sort is O(k log k) where k is the number of matching rows.
+- `SELECT *` causes the DB to fetch every column from disk, including large `message` fields for rows we may not need.
+
+**Result:** The query is O(n) for the scan + O(k log k) for sort = very slow on 5M rows.
+
+---
+
+#### Q3: What would I change? Computation cost?
+
+**Changes:**
+
+```sql
+SELECT id, notification_type, message, created_at
+FROM notifications
+WHERE student_id = 1042
+  AND is_read = false
+ORDER BY created_at ASC;
+
+-- Create a composite index that covers all conditions
+CREATE INDEX idx_notif_student_unread_time
+  ON notifications(student_id, is_read, created_at ASC);
+```
+
+**With this index:**
+- The DB uses the index to jump directly to rows where `student_id = 1042 AND is_read = false` — O(log n) lookup.
+- The results from the index are already in `created_at ASC` order — no separate sort step.
+- We only read the specific columns we need, not `SELECT *`.
+
+**Computation cost comparison:**
+
+| | Before | After |
+|--|--------|-------|
+| Scan | O(n) full table scan — 5M rows | O(log n) index seek |
+| Sort | O(k log k) in-memory sort | O(1) — index already sorted |
+| I/O | All columns fetched | Only needed columns |
+
+---
+
+#### Q4: Is "index every column" a good idea?
+
+**No. This is bad advice for several reasons:**
+
+1. **Indexes take disk space** — each index is a separate B-tree structure. Indexing every column on a 5M-row table would use GBs of storage.
+2. **Indexes slow down writes** — every `INSERT`, `UPDATE`, and `DELETE` must update all indexes. With many indexes, write performance degrades significantly.
+3. **Indexes only help when used** — the query planner uses indexes based on WHERE clauses, JOIN conditions, and ORDER BY. An index on a column that is never filtered or joined on is pure overhead.
+4. **The query planner can be confused** — too many indexes make it harder for PostgreSQL to choose the optimal plan.
+
+**Rule:** Only index columns that appear in frequent `WHERE`, `JOIN ON`, or `ORDER BY` clauses.
+
+---
+
+#### Q5: Students who received a Placement notification in the last 7 days
+
+```sql
+-- Using the normalized schema (student_notifications + notifications)
+SELECT DISTINCT sn.student_id
+FROM student_notifications sn
+JOIN notifications n ON sn.notification_id = n.id
+WHERE n.notification_type = 'Placement'
+  AND n.created_at >= NOW() - INTERVAL '7 days';
+
+-- Or, if using flat table with student_id directly on notifications:
+SELECT DISTINCT student_id
+FROM notifications
+WHERE notification_type = 'Placement'
+  AND created_at >= NOW() - INTERVAL '7 days';
+```
+
+---
+
+---
+
