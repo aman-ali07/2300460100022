@@ -20,7 +20,7 @@ export function useViewedNotifications() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(ids)));
     } catch {
-      // storage quota or private mode — not worth crashing over
+      // ignore storage errors
     }
   }
 

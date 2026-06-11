@@ -3,14 +3,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
-/**
- * Dark theme inspired by modern dashboards.
- * Colors:
- *   Primary (Indigo)   — #6366f1 — used for actions and highlights
- *   Secondary (Emerald)— #10b981 — used for priority/success states
- *   Background         — #0f172a (dark navy)
- *   Paper/Card         — #1e293b (slightly lighter navy)
- */
+// dark theme with indigo primary, emerald secondary
 const theme = createTheme({
   palette: {
     mode: 'dark',

@@ -1,9 +1,4 @@
-/**
- * Reusable Logging Middleware
- *
- * This package can be consumed by both the backend and frontend.
- * It strictly adheres to the schema and constraints of the Evaluation API.
- */
+// reusable logger consumed by both backend and frontend
 
 export type Stack = 'backend' | 'frontend';
 export type Level = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
@@ -34,8 +29,7 @@ export async function Log(
   pkg: LogPackage,
   message: string
 ): Promise<void> {
-  // If running on frontend, we assume a local proxy routes to backend.
-  // If running on backend, we need the activeToken.
+  // frontend proxies through the backend; backend needs the token
   const isFrontend = typeof window !== 'undefined';
   const targetUrl = isFrontend ? '/api/log' : LOGS_API;
 
@@ -51,6 +45,6 @@ export async function Log(
       body: JSON.stringify({ stack, level, package: pkg, message }),
     });
   } catch {
-    // Logging failure should never crash the host application
+    // ignore logging failures
   }
 }

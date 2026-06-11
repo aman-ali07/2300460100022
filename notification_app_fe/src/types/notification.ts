@@ -1,4 +1,4 @@
-// Notification shape as returned by the Affordmed API
+// notification shape from the api
 export interface Notification {
   ID: string;
   Type: 'Event' | 'Result' | 'Placement';

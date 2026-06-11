@@ -1,7 +1,14 @@
 node_modules/
 dist/
+.next/
+build/
+coverage/
 .env
 .env.local
-.next/
+.env.production
 *.log
 .DS_Store
+.vscode/
+.idea/
+*.tsbuildinfo
+screenshot/

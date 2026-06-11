@@ -1,7 +1,7 @@
 {
   "name": "logging-middleware",
   "version": "1.0.0",
-  "description": "Reusable logging middleware for the Evaluation Campus Platform",
+  "description": "reusable logging middleware for the evaluation api",
   "main": "logger.ts",
   "types": "logger.ts",
   "dependencies": {}

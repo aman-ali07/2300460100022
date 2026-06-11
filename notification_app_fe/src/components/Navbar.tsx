@@ -23,7 +23,6 @@ export default function Navbar() {
       }}
     >
       <Toolbar>
-        {/* Logo */}
         <NotificationsIcon sx={{ color: '#6366f1', mr: 1 }} />
         <Typography
           variant="h6"
@@ -35,7 +34,6 @@ export default function Navbar() {
           </Box>
         </Typography>
 
-        {/* Navigation */}
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
             component={Link}

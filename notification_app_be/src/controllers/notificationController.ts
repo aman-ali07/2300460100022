@@ -30,8 +30,8 @@ export async function getPriorityNotifications(req: Request, res: Response): Pro
 
     await Log('backend', 'info', 'controller', `GET /api/notifications/priority n=${n}`);
 
-    // Pull a larger batch so the true top-N survives type filtering
-    const allNotifications = await fetchNotifications({ limit: 100, notification_type });
+    // pull latest batch for priority scoring (api limit is 10)
+    const allNotifications = await fetchNotifications({ limit: 10, notification_type });
     const topNotifications = getTopN(allNotifications, n);
 
     res.json({ notifications: topNotifications, total: topNotifications.length });
@@ -42,7 +42,7 @@ export async function getPriorityNotifications(req: Request, res: Response): Pro
   }
 }
 
-// Frontend logs come here and we forward them with our server-side token
+// proxy frontend logs through backend (has the auth token)
 export async function proxyLog(req: Request, res: Response): Promise<void> {
   try {
     const { stack, level, package: pkg, message } = req.body;

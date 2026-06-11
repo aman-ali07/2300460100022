@@ -7,11 +7,10 @@ import {
 
 const router = Router();
 
-// Notification routes
-router.get('/notifications/priority', getPriorityNotifications); // must be before /notifications/:id
+// priority route must come before catch-all
+router.get('/notifications/priority', getPriorityNotifications);
 router.get('/notifications', getNotifications);
 
-// Frontend logging proxy
 router.post('/log', proxyLog);
 
 export default router;

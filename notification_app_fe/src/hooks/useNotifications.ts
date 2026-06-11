@@ -17,7 +17,7 @@ export function useNotifications(params: FetchParams = {}): UseNotificationsRetu
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Stable string dep so useEffect doesn’t re-run when a new object ref is passed with the same values
+  // serialize params to avoid unnecessary re-fetches
   const paramsKey = JSON.stringify(params);
 
   const load = useCallback(async () => {

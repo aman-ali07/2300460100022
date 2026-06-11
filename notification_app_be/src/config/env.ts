@@ -1,4 +1,4 @@
-// Fail fast at startup rather than error on the first request that needs a missing var
+// validate required env vars at startup
 export function validateEnv(): void {
   const required = [
     'AFFORDMED_EMAIL',

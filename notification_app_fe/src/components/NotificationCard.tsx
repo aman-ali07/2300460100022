@@ -7,7 +7,7 @@ import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
 import { Notification } from '@/types/notification';
 
-// Color scheme per notification type
+// colors per notification type
 const TYPE_CONFIG: Record<
   string,
   { chipColor: 'warning' | 'primary' | 'success'; borderColor: string }
@@ -21,7 +21,7 @@ interface Props {
   notification: Notification;
   isViewed: boolean;
   onClick: () => void;
-  rank?: number; // Optional rank number (for priority page)
+  rank?: number; // rank for priority page
 }
 
 export default function NotificationCard({
@@ -61,9 +61,8 @@ export default function NotificationCard({
             mb: 0.5,
           }}
         >
-          {/* Left: unread dot + type chip + optional rank */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {/* Blue dot for new (unviewed) notifications */}
+            {/* unread dot */}
             {!isViewed && (
               <Box
                 sx={{
@@ -102,13 +101,11 @@ export default function NotificationCard({
             />
           </Box>
 
-          {/* Right: time ago */}
           <Typography variant="caption" color="text.secondary">
             {timeAgo}
           </Typography>
         </Box>
 
-        {/* Message */}
         <Typography
           variant="body2"
           sx={{

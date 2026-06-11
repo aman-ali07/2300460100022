@@ -10,7 +10,7 @@ export type LogPackage =
 
 let token = '';
 
-// authService calls this on every refresh so the logger always has a live token
+// called by authservice on token refresh
 export function setLoggerToken(freshToken: string): void {
   token = freshToken;
 }
@@ -21,7 +21,7 @@ export async function Log(
   pkg: LogPackage,
   message: string
 ): Promise<void> {
-  // Empty during startup auth — skip rather than queue
+  // skip if token not yet available (startup)
   if (!token) return;
 
   try {
@@ -34,6 +34,6 @@ export async function Log(
       body: JSON.stringify({ stack, level, package: pkg, message }),
     });
   } catch {
-    // A logging failure should never surface to the caller
+    // ignore logging failures
   }
 }

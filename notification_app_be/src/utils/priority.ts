@@ -6,7 +6,7 @@ const TYPE_WEIGHT: Record<string, number> = {
   Event: 1,
 };
 
-// score = importance × recency. Older and less important both decay toward 0.
+// score = type weight / (age in hours + 1)
 function getPriorityScore(notification: Notification): number {
   const weight = TYPE_WEIGHT[notification.Type] ?? 1;
   const ageInHours = (Date.now() - new Date(notification.Timestamp).getTime()) / 3_600_000;
@@ -19,8 +19,8 @@ export function getTopN(notifications: Notification[], n: number): Notification[
     .slice(0, n);
 }
 
-// Keeps top-N current as notifications stream in.
-// Array sort beats a heap here because N≤20, so the constant factors dominate.
+// maintains top-n as new notifications arrive
+// simple array sort is fine since n ≤ 20
 export class PriorityInbox {
   private topNotifications: (Notification & { score: number })[] = [];
   private capacity: number;

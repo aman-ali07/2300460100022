@@ -1,9 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 
-// dotenv must run before we import our own modules — they read process.env at import time
-dotenv.config();
+// load env before importing modules that read process.env
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 import { validateEnv } from './config/env';
 import { initAuth } from './services/authService';
@@ -26,7 +27,7 @@ app.get('/health', (_req, res) => {
 
 async function start() {
   try {
-    await initAuth(); // token must exist before we accept requests
+    await initAuth();
     app.listen(PORT, () => console.log(`http://localhost:${PORT}`));
     await Log('backend', 'info', 'config', `Server started on port ${PORT}`);
   } catch (err) {

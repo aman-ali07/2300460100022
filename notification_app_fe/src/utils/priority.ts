@@ -1,4 +1,4 @@
-// Frontend priority scoring utility (mirrors backend logic)
+// frontend priority scoring (mirrors backend)
 import { Notification } from '@/types/notification';
 
 const TYPE_WEIGHT: Record<string, number> = {

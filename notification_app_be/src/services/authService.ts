@@ -10,7 +10,7 @@ export async function initAuth(): Promise<void> {
 }
 
 export async function getToken(): Promise<string> {
-  // 5min buffer so we never hand out a token that expires mid-request
+  // refresh 5min before expiry to avoid mid-request expiration
   if (!activeToken || Date.now() >= tokenExpiresAt - 5 * 60_000) {
     await refreshToken();
   }
@@ -35,7 +35,7 @@ async function refreshToken(): Promise<void> {
     throw new Error(`Auth failed: ${response.status}`);
   }
 
-  // expires_in is a unix timestamp (seconds), not "seconds until expiry"
+  // expires_in is a unix timestamp in seconds
   const { access_token, expires_in } = await response.json() as {
     access_token: string;
     expires_in: number;

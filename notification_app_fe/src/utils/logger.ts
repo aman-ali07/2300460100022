@@ -6,7 +6,7 @@ export type LogPackage =
   | 'api' | 'component' | 'hook' | 'page' | 'state' | 'style'
   | 'auth' | 'config' | 'middleware' | 'utils';
 
-// Credentials stay server-side — frontend logs route through our backend proxy
+// frontend logs proxy through backend (has the auth token)
 export async function Log(
   stack: Stack,
   level: Level,
@@ -20,6 +20,6 @@ export async function Log(
       body: JSON.stringify({ stack, level, package: pkg, message }),
     });
   } catch {
-    // never crash the UI over a log
+    // ignore logging failures
   }
 }
