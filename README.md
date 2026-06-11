@@ -1,8 +1,8 @@
 # Notification Platform
 
 Campus hiring evaluation project.
-(screenshot/logs_whatsapp.jpeg)
-
+![](screenshot/logs_whatsapp.jpeg)
+![](screenshot/logs_phone.jpg)
 ## Structure
 
 - logging-middleware/
@@ -19,8 +19,7 @@ Campus hiring evaluation project.
 ### Authorisation API Call
 ![Authorisation](screenshot/Authorisation_api_call.png)
 
-### Logs — Phone
-![Phone Logs](screenshot/logs_phone.jpg)
+
 
 
 
