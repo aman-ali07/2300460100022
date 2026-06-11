@@ -181,3 +181,121 @@ source.onmessage = (event) => {
 
 ---
 
+## Stage 2
+
+### Database Design
+
+#### Choice: PostgreSQL
+
+**Why PostgreSQL?**
+- **ACID compliance** — guarantees data integrity (no partial writes)
+- **Rich indexing** — composite, partial, and expression indexes for query optimization
+- **Enum support** — enforces valid notification types at DB level
+- **Joins** — easy to link students with their notification read status
+- **Mature ecosystem** — well-understood, reliable, production-proven
+
+---
+
+#### Schema
+
+```sql
+-- Enum for notification types
+CREATE TYPE notification_type AS ENUM ('Event', 'Result', 'Placement');
+
+-- Students (one row per campus student)
+CREATE TABLE students (
+  id         SERIAL PRIMARY KEY,
+  name       VARCHAR(255) NOT NULL,
+  email      VARCHAR(255) UNIQUE NOT NULL,
+  roll_no    VARCHAR(50)  UNIQUE NOT NULL,
+  created_at TIMESTAMP    DEFAULT NOW()
+);
+
+-- Notifications (the actual notification content)
+-- One row per notification broadcast to all students
+CREATE TABLE notifications (
+  id                UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_type notification_type NOT NULL,
+  message           TEXT             NOT NULL,
+  created_at        TIMESTAMP        DEFAULT NOW()
+);
+
+-- Student-Notification mapping (tracks read status per student)
+-- Many-to-many: each student has their own read/unread state per notification
+CREATE TABLE student_notifications (
+  student_id      INT  REFERENCES students(id)      ON DELETE CASCADE,
+  notification_id UUID REFERENCES notifications(id) ON DELETE CASCADE,
+  is_read         BOOLEAN   DEFAULT FALSE,
+  read_at         TIMESTAMP,
+  PRIMARY KEY (student_id, notification_id)
+);
+
+-- Indexes for fast queries
+CREATE INDEX idx_sn_student_created
+  ON notifications(created_at DESC);
+
+CREATE INDEX idx_sn_student_unread
+  ON student_notifications(student_id, is_read);
+
+CREATE INDEX idx_notif_type_created
+  ON notifications(notification_type, created_at DESC);
+```
+
+---
+
+#### Problems as Data Grows + Solutions
+
+| Problem | Scale Trigger | Solution |
+|---------|--------------|----------|
+| `student_notifications` grows to billions of rows | 50K students × millions of notifications | **Partition by created_at** (monthly partitions) |
+| Slow read queries under load | Thousands of concurrent users | **Read replica** — route SELECT to replica, writes to primary |
+| Hot writes when "Notify All" triggers | 50K simultaneous inserts | **Message queue** (BullMQ) — insert asynchronously via workers |
+| Stale data in user feed | High read traffic | **Redis cache** with 60s TTL (see Stage 4) |
+
+---
+
+#### SQL Queries for Stage 1 APIs
+
+```sql
+-- GET /api/notifications?page=1&limit=20 (for student ID 1042)
+SELECT
+  n.id,
+  n.notification_type,
+  n.message,
+  n.created_at,
+  sn.is_read
+FROM notifications n
+JOIN student_notifications sn ON n.id = sn.notification_id
+WHERE sn.student_id = 1042
+ORDER BY n.created_at DESC
+LIMIT 20 OFFSET 0;
+
+-- GET /api/notifications?notification_type=Placement
+SELECT
+  n.id,
+  n.notification_type,
+  n.message,
+  n.created_at,
+  sn.is_read
+FROM notifications n
+JOIN student_notifications sn ON n.id = sn.notification_id
+WHERE sn.student_id = 1042
+  AND n.notification_type = 'Placement'
+ORDER BY n.created_at DESC
+LIMIT 20 OFFSET 0;
+
+-- PATCH /api/notifications/:id/read
+UPDATE student_notifications
+SET is_read = TRUE, read_at = NOW()
+WHERE student_id = 1042 AND notification_id = $1;
+
+-- PATCH /api/notifications/read-all
+UPDATE student_notifications
+SET is_read = TRUE, read_at = NOW()
+WHERE student_id = 1042 AND is_read = FALSE;
+```
+
+---
+
+---
+
